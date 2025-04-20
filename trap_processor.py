@@ -25,6 +25,8 @@ class Event:
     enrich3: Optional[str]
     enrich4: Optional[str]
     enrich5: Optional[str]
+    event_state: str = "Active"
+    event_class: Optional[str] = None
 
 class TrapProcessor:
     def __init__(self, trap_queue, config_file='config.yaml'):
@@ -116,6 +118,19 @@ class TrapProcessor:
                 extraction_rules['severity']
             )
 
+            # Determine event class based on trap OID
+            event_class = self.config['trap_processor']['event_classes']['default']
+            for vendor, oid_prefix in self.config['trap_processor']['event_classes'].items():
+                if vendor != 'default' and str(trap_oid).startswith(oid_prefix):
+                    event_class = f"{vendor.capitalize()}Alert"
+                    break
+
+            # Check if this is a clear trap
+            is_clear_trap = any(
+                str(trap_oid).endswith(clear_suffix)
+                for clear_suffix in ['.0.1', '.0.2']  # Common clear trap suffixes
+            )
+
             # Create event with extracted information
             event = Event(
                 element_name=trap_data['source_address'],
@@ -127,12 +142,14 @@ class TrapProcessor:
                 event_type='SNMP_TRAP',
                 create_time=trap_data['timestamp'],
                 updated_time=trap_data['timestamp'],
-                clear_time=None,
+                clear_time=trap_data['timestamp'] if is_clear_trap else None,
                 enrich1=self.get_enrichment_value(self.config['trap_processor']['enrichments']['enrich1'], trap_data['varbinds']),
                 enrich2=self.get_enrichment_value(self.config['trap_processor']['enrichments']['enrich2'], trap_data['varbinds']),
                 enrich3=self.get_enrichment_value(self.config['trap_processor']['enrichments']['enrich3'], trap_data['varbinds']),
                 enrich4=self.get_enrichment_value(self.config['trap_processor']['enrichments']['enrich4'], trap_data['varbinds']),
-                enrich5=self.get_enrichment_value(self.config['trap_processor']['enrichments']['enrich5'], trap_data['varbinds'])
+                enrich5=self.get_enrichment_value(self.config['trap_processor']['enrichments']['enrich5'], trap_data['varbinds']),
+                event_state="InActive" if is_clear_trap else "Active",
+                event_class=event_class
             )
             
             self.events.append(event)
