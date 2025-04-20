@@ -1,0 +1,7 @@
+pysnmp==4.4.12
+flask>=2.0.1
+pyyaml>=5.4.1
+python-dateutil>=2.8.2
+pysnmp-mibs==0.1.6
+pyasn1==0.4.8
+pyasn1-modules==0.2.8 

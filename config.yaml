@@ -1,0 +1,54 @@
+trap_listener:
+  port: 1162
+  queue_size: 1000
+  log_file: "logs/trap_listener.log"
+  blocked_oids: []
+  blocked_senders: []
+
+trap_processor:
+  log_file: "logs/trap_processor.log"
+  web_port: 5000
+  
+  # Dynamic extraction rules for different trap types
+  extraction_rules:
+    # Rule for Fortinet VPN traps (example)
+    ".1.3.6.1.4.1.12356.103.0":
+      instance_name:
+        - pattern: 'devname="([^"]+)"'
+          varbind_oid: ".1.3.6.1.4.1.12356.100.1.3.1.1.0"
+      event_name:
+        - pattern: 'vpntunnel="([^"]+)"'
+          varbind_oid: ".1.3.6.1.4.1.12356.100.1.3.1.1.0"
+      severity:
+        - pattern: 'severity=([^ ]+)'
+          varbind_oid: ".1.3.6.1.4.1.12356.100.1.3.1.1.0"
+    
+    # Add more trap types here with their extraction rules
+    # Example for another trap type:
+    # ".1.3.6.1.4.1.9.9.41.2.0.1":  # Cisco traps
+    #   instance_name:
+    #     - pattern: 'hostname=([^,]+)'
+    #       varbind_oid: ".1.3.6.1.4.1.9.9.41.2.0.1.1.0"
+    #   event_name:
+    #     - pattern: 'event=([^,]+)'
+    #       varbind_oid: ".1.3.6.1.4.1.9.9.41.2.0.1.2.0"
+    
+  # Default extraction rules if no specific trap type is matched
+  default_extraction:
+    instance_name:
+      - pattern: 'hostname=([^,]+)'
+        varbind_oid: ".1.3.6.1.2.1.1.5.0"  # sysName
+    event_name:
+      - pattern: 'trap=([^,]+)'
+        varbind_oid: ".1.3.6.1.6.3.1.1.4.1.0"  # snmpTrapOID.0
+    severity:
+      - pattern: 'severity=([^ ]+)'
+        varbind_oid: ".1.3.6.1.4.1.9.9.41.2.0.1.3.0"  # Example severity OID
+    
+  # Enrichment configuration
+  enrichments:
+    enrich1: "static:Network"
+    enrich2: "varbind:1.3.6.1.2.1.1.1.0"  # Example: sysDescr
+    enrich3: ""
+    enrich4: ""
+    enrich5: "" 

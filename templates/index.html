@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SNMP Trap Events</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-container {
+            margin: 20px;
+            overflow-x: auto;
+        }
+        .severity-high {
+            background-color: #ffebee;
+        }
+        .severity-medium {
+            background-color: #fff3e0;
+        }
+        .severity-low {
+            background-color: #f1f8e9;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">SNMP Trap Monitor</span>
+        </div>
+    </nav>
+
+    <div class="table-container">
+        <table class="table table-bordered table-hover" id="eventsTable">
+            <thead class="table-dark">
+                <tr>
+                    <th>Element Name</th>
+                    <th>Instance Name</th>
+                    <th>Event Name</th>
+                    <th>Event</th>
+                    <th>Event Text</th>
+                    <th>Severity</th>
+                    <th>Event Type</th>
+                    <th>Create Time</th>
+                    <th>Updated Time</th>
+                    <th>Clear Time</th>
+                    <th>Enrich1</th>
+                    <th>Enrich2</th>
+                    <th>Enrich3</th>
+                    <th>Enrich4</th>
+                    <th>Enrich5</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function updateEvents() {
+            fetch('/api/events')
+                .then(response => response.json())
+                .then(data => {
+                    const tbody = document.querySelector('#eventsTable tbody');
+                    tbody.innerHTML = '';
+                    
+                    data.events.forEach(event => {
+                        const row = document.createElement('tr');
+                        
+                        // Add severity class
+                        if (event.severity.toLowerCase().includes('critical') || 
+                            event.severity.toLowerCase().includes('high')) {
+                            row.classList.add('severity-high');
+                        } else if (event.severity.toLowerCase().includes('medium') || 
+                                 event.severity.toLowerCase().includes('warning')) {
+                            row.classList.add('severity-medium');
+                        } else {
+                            row.classList.add('severity-low');
+                        }
+                        
+                        const fields = [
+                            'element_name', 'instance_name', 'event_name', 'event',
+                            'event_text', 'severity', 'event_type', 'create_time',
+                            'updated_time', 'clear_time', 'enrich1', 'enrich2',
+                            'enrich3', 'enrich4', 'enrich5'
+                        ];
+                        
+                        fields.forEach(field => {
+                            const td = document.createElement('td');
+                            td.textContent = event[field] || '-';
+                            row.appendChild(td);
+                        });
+                        
+                        tbody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error fetching events:', error));
+        }
+
+        // Update events every 5 seconds
+        setInterval(updateEvents, 5000);
+        // Initial update
+        updateEvents();
+    </script>
+</body>
+</html> 
